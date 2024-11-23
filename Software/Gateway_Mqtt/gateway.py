@@ -2,12 +2,14 @@ import paho.mqtt.client as mqtt
 import socket
 import time
 import struct
+import json
+
 
 # Configuration
-BROKER = "192.168.0.132"  # Adresse du broker MQTT
+BROKER = "192.168.1.98"  # Adresse du broker MQTT
 PORT = 1883                   # Port du broker MQTT
-MQTT_USERNAME = "mqttclient"
-MQTT_PASSWORD = "mqttmqtt"
+MQTT_USERNAME = ""
+MQTT_PASSWORD = ""
 
 TOPIC_PUB_BOILER = "gatewayBBA/temperature_boiler"  # Température de la chaudière
 TOPIC_PUB_OUTSIDE = "gatewayBBA/temperature_outside"  # Température extérieure
@@ -19,6 +21,7 @@ TOPIC_TIMESTAMP = "gatewayBBA/timestamp"
 TOPIC_STATE_BOILER = "gatewayBBA/state_boiler" # Etat de fonctionnement : 1->allumé, 0->Eteint
 
 TOPIC_BOILER_RUNNING_MODE = "gatewayBBA/boiler_running_mode" # Mode de fonctionnement : 0->Eteint, 1-> Mode manuel, 2->Mode automatique  
+TOPIC_ASK_ROOM_TEMPERATURES = "gatewayBBA/ask_room_temperatures" # Temperature jour et nuit
 TOPIC_GET_ROOM_TEMPERATURES = "gatewayBBA/get_room_temperatures" # Temperature jour et nuit
 TOPIC_SET_ROOM_TEMPERATURES = "gatewayBBA/set_room_temperatures" # Temperature jour et nuit
 
@@ -29,25 +32,25 @@ TOPIC_GET_HEATING_CURVE_PARAMETERS = "gatewayBBA/get_heating_curve_parameters"  
 TOPIC_SET_HEATING_CURVE_PARAMETERS = "gatewayBBA/set_heating_curve_parameters"          # Paramètre de la courbe de la loi d'eau (coefficient et parallel shift)
 
 
-BOILER_PROTOCOL_MAGIC_NUMBER=0x30
+BOILER_PROTOCOL_MAGIC_NUMBER=0xA5
 
 BOILER_COMMAND_GET_FIRMWARE_VERSION=0
 BOILER_COMMAND_GET_SENSORS_RAW_TEMPERATURES=1
 BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES=2
 BOILER_COMMAND_GET_MIXING_VALVE_POSITION=3
 BOILER_COMMAND_SET_NIGHT_MODE=4
-BOILER_COMMAND_GET_DESIRED_ROOM_TEMPERATURES=0x35 #
-BOILER_COMMAND_SET_DESIRED_ROOM_TEMPERATURES=0x36 #
+BOILER_COMMAND_GET_DESIRED_ROOM_TEMPERATURES=5 #
+BOILER_COMMAND_SET_DESIRED_ROOM_TEMPERATURES=6 #
 BOILER_COMMAND_GET_TRIMMERS_RAW_VALUES=7
 BOILER_COMMAND_GET_BOILER_RUNNING_MODE=8 #
 BOILER_COMMAND_SET_BOILER_RUNNING_MODE=9 #
-BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE=0x31 #10 # TOPIC_START_WATER_OUTSIDE_TEMPERATURES
-BOILER_COMMAND_GET_HEATING_CURVE_PARAMETERS=0x32 #11
-BOILER_COMMAND_SET_HEATING_CURVE_PARAMETERS=0x33 #12
+BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE=10 # TOPIC_START_WATER_OUTSIDE_TEMPERATURES
+BOILER_COMMAND_GET_HEATING_CURVE_PARAMETERS=11
+BOILER_COMMAND_SET_HEATING_CURVE_PARAMETERS=12
 BOILER_COMMANDS_COUNT=13
 
-SERVEUR_TCP="127.0.0.1"
-PORT_TCP=8888
+SERVEUR_TCP="192.168.1.100"
+PORT_TCP=1234
 
 
 
@@ -76,6 +79,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(TOPIC_START_WATER_OUTSIDE_TEMPERATURES)
         client.subscribe(TOPIC_SET_ROOM_TEMPERATURES)
         client.subscribe(TOPIC_SET_HEATING_CURVE_PARAMETERS)
+        client.subscribe(TOPIC_ASK_ROOM_TEMPERATURES)
     else:
         print(f"Erreur de connexion. Code : {rc}")
 
@@ -93,8 +97,8 @@ def on_message(client, userdata, msg):
         buffer[1] = BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE    
         client_socket.sendall(buffer)
 
-    elif msg.topic == TOPIC_GET_ROOM_TEMPERATURES:
-        print ("TOPIC_GET_ROOM_TEMPERATURES")
+    elif msg.topic == TOPIC_ASK_ROOM_TEMPERATURES:
+        print ("TOPIC_ASK_ROOM_TEMPERATURES")
         buffer = bytearray(2)
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
         buffer[1] = BOILER_COMMAND_GET_DESIRED_ROOM_TEMPERATURES
@@ -157,7 +161,7 @@ client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 # Connexion au broker
-client.connect(BROKER, PORT, 60)
+client.connect(BROKER, PORT)
 client.username_pw_set(username=MQTT_USERNAME, password=MQTT_PASSWORD)
 
 
@@ -179,23 +183,52 @@ def analyse_boiler():
             print (int(data[0]))
             print (int(BOILER_PROTOCOL_MAGIC_NUMBER))
             
+            trameDecodee =  [byte for byte in data]
+            
+            print(trameDecodee)
+
+            custom_keys = ["magicNumber", "key", "value1", "value2", "value3", "value4"]
+            json_dict = {key: value for key, value in zip(custom_keys, trameDecodee)}
+            json_string = json.dumps(json_dict, indent=4)
+
+
             if (int(data[0]) == int(BOILER_PROTOCOL_MAGIC_NUMBER)):
                 if (data[1] == int(BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE)):
-                    publier_message(TOPIC_START_WATER_OUTSIDE_TEMPERATURES, data)
-                    print(data)
-                elif (data[1] == int(BOILER_COMMAND_GET_DESIRED_ROOM_TEMPERATURES) and len(data) == 4 ):
-                    print(data)
-                    buffer = bytearray(data)
 
-                    str = "" +  chr(buffer[2]) + ',' + chr(buffer[3]) 
+                    publier_message(TOPIC_START_WATER_OUTSIDE_TEMPERATURES, json_string)
+                    
+                elif (data[1] == int(BOILER_COMMAND_GET_DESIRED_ROOM_TEMPERATURES)):
 
-                    publier_message(TOPIC_GET_ROOM_TEMPERATURES, str)
+                    publier_message(TOPIC_GET_ROOM_TEMPERATURES, json_string)
                     
                 elif (data[1] == BOILER_COMMAND_GET_HEATING_CURVE_PARAMETERS):
-                    publier_message(TOPIC_GET_HEATING_CURVE_PARAMETERS, data)
+
+                    publier_message(TOPIC_GET_HEATING_CURVE_PARAMETERS, json_string)
     except Exception as e:
         print(e)
         client_socket_connecte = False
+
+
+def interrogation_boiler():
+    print ("TOPIC_GET_ROOM_TEMPERATURES")
+    buffer = bytearray(2)
+    buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
+    buffer[1] = BOILER_COMMAND_GET_DESIRED_ROOM_TEMPERATURES
+    client_socket.sendall(buffer)
+    
+    time.sleep(1)
+    
+    buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
+    buffer[1] = BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE
+
+    time.sleep(1)
+    
+    buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
+    buffer[1] = BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE
+
+    client_socket.sendall(buffer)
+
+
 
 # Fonction pour publier un message
 def publier_message(topic, message):
@@ -205,6 +238,8 @@ def publier_message(topic, message):
 # Boucle réseau dans un thread séparé
 client.loop_start()
 
+i = 0
+
 # Exemple : Envoyer des commandes
 try:
     while True:
@@ -213,10 +248,22 @@ try:
             client_socket, client_address = server_socket.accept()
             print (client_socket)
             client_socket_connecte = True
+            time.sleep(1)
+            
+            #interrogation_boiler()
             
             while client_socket_connecte == True:
                 analyse_boiler()
                 time.sleep(10 / 1000)
+                i = i + 1
+                print(i)
+                if i > 50:
+                    print("------------------------------------")
+                    print(i)
+                    interrogation_boiler()
+                    i = 0
+                    
+
         finally:
             client_socket_connecte = False
             client_socket.close()
