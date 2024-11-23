@@ -8,8 +8,8 @@ import json
 # Configuration
 BROKER = "192.168.1.98"  # Adresse du broker MQTT
 PORT = 1883                   # Port du broker MQTT
-MQTT_USERNAME = ""
-MQTT_PASSWORD = ""
+MQTT_USERNAME = "bba13320"
+MQTT_PASSWORD = "Mosquitto3zAVkzf69"
 
 TOPIC_PUB_BOILER = "gatewayBBA/temperature_boiler"  # Température de la chaudière
 TOPIC_PUB_OUTSIDE = "gatewayBBA/temperature_outside"  # Température extérieure
@@ -21,10 +21,12 @@ TOPIC_TIMESTAMP = "gatewayBBA/timestamp"
 TOPIC_STATE_BOILER = "gatewayBBA/state_boiler" # Etat de fonctionnement : 1->allumé, 0->Eteint
 
 TOPIC_BOILER_RUNNING_MODE = "gatewayBBA/boiler_running_mode" # Mode de fonctionnement : 0->Eteint, 1-> Mode manuel, 2->Mode automatique  
+
 TOPIC_ASK_ROOM_TEMPERATURES = "gatewayBBA/ask_room_temperatures" # Temperature jour et nuit
 TOPIC_GET_ROOM_TEMPERATURES = "gatewayBBA/get_room_temperatures" # Temperature jour et nuit
 TOPIC_SET_ROOM_TEMPERATURES = "gatewayBBA/set_room_temperatures" # Temperature jour et nuit
 
+TOPIC_ASK_START_WATER_OUTSIDE_TEMPERATURES = "gatewayBBA/ask_start_water_temperatures" 
 TOPIC_START_WATER_OUTSIDE_TEMPERATURES = "gatewayBBA/get_start_water_temperature"   # Temperature à la sortie du boiler(correspond à la temperature du depart des radiateurs) 
                                                                                 # et la température de la sonde extérieure
 
@@ -80,6 +82,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(TOPIC_SET_ROOM_TEMPERATURES)
         client.subscribe(TOPIC_SET_HEATING_CURVE_PARAMETERS)
         client.subscribe(TOPIC_ASK_ROOM_TEMPERATURES)
+        client.subscribe(TOPIC_ASK_START_WATER_OUTSIDE_TEMPERATURES)
     else:
         print(f"Erreur de connexion. Code : {rc}")
 
@@ -90,7 +93,7 @@ def on_message(client, userdata, msg):
     if msg.topic == TOPIC_PUB_BOILER:
         print ("TOPIC_PUB_BOILER")
 
-    elif msg.topic == TOPIC_START_WATER_OUTSIDE_TEMPERATURES:
+    elif msg.topic == TOPIC_ASK_START_WATER_OUTSIDE_TEMPERATURES:
         print ("TOPIC_GET_START_WATER_OUTSIDE_TEMPERATURES")
         buffer = bytearray(2) 
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER
