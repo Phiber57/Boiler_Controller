@@ -5,6 +5,7 @@ REPO_URL="https://github.com/Phiber57/Boiler_Controller.git"
 REPO_NAME=$(basename $REPO_URL .git)
 SCRIPT_NAME="run.sh"
 WORK_DIR="boiler"
+SRC_DIR="Software"
 VERSION_FILE="$WORK_DIR/last_version"
 
 # Créer le dossier de travail s'il n'existe pas
@@ -25,13 +26,13 @@ if [ ! -f "$VERSION_FILE" ] || ! diff -q current_version "$VERSION_FILE" > /dev/
     git clone $REPO_URL
     
     # Entrer dans le dossier du dépôt
-    cd $REPO_NAME
+    cd $REPO_NAME/$SOFT_NAME
     
     # Rendre le script exécutable
-    chmod +x $SCRIPT_NAME
+    chmod +x ./run/$SCRIPT_NAME
     
     # Exécuter le script
-    ./$SCRIPT_NAME
+    ./run/$SCRIPT_NAME
     
     # Mettre à jour le fichier de version
     mv ../current_version "$VERSION_FILE"
