@@ -35,7 +35,7 @@ if [ ! -f "$VERSION_FILE" ] || ! diff -q current_version "$VERSION_FILE" > /dev/
     ./run/$SCRIPT_NAME
     
     # Mettre à jour le fichier de version
-    mv ../current_version "$VERSION_FILE"
+    mv current_version "$VERSION_FILE"
     
     # Nettoyer
     cd ..
