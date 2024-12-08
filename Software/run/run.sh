@@ -1,1 +1,1 @@
-python Gateway_Mqtt/gateway.py
+python Gateway_Mqtt/gateway.py &
