@@ -13,7 +13,7 @@ PORT=credential.credential.PORT
 MQTT_USERNAME=credential.credential.MQTT_USERNAME
 MQTT_PASSWORD=credential.credential.MQTT_PASSWORD
 
-SERVEUR_TCP="192.168.1.100"
+SERVEUR_TCP=credential.credentia.LOCAL_ADDRESS
 PORT_TCP=1234
 
 
