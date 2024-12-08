@@ -5,7 +5,7 @@ import struct
 import json
 import credential
 import credential.credential
-
+import time
 
 # Configuration mqtt : fill variabes (BROKER, MQTT_USERNAME, MQTT_PASSWORD)  in a file named credential/credential.py
 BROKER=credential.credential.BROKER
@@ -211,9 +211,18 @@ client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 # Connexion au broker
-client.connect(BROKER, PORT)
-client.username_pw_set(username=MQTT_USERNAME, password=MQTT_PASSWORD)
 
+bSocketClientConnected = False
+while bSocketClientConnected == False:
+
+    try:
+        client.connect(BROKER, PORT)
+        client.username_pw_set(username=MQTT_USERNAME, password=MQTT_PASSWORD)
+        bSocketServeurCreated = True
+    except Exception as e:
+        print("Exception socket")
+        time.sleep(3)
+    
 bSocketServeurCreated = False
 
 while bSocketServeurCreated == False:
@@ -226,7 +235,7 @@ while bSocketServeurCreated == False:
         bSocketServeurCreated = True
     except Exception as e:
         print("Exception socket")
-
+        time.sleep(3)
 
 def analyse_boiler():
     global client_socket_connecte
