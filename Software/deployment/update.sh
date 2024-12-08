@@ -29,7 +29,7 @@ if [ ! -f "$VERSION_FILE" ] || ! diff -q current_version "$VERSION_FILE" > /dev/
     cd $REPO_NAME/$SRC_DIR
 
     # Rendre le script exécutable
-    chmod +x ./run/$SCRIPT_NAME
+    sudo chmod +x ./run/$SCRIPT_NAME
     
     # Exécuter le script
     ./run/$SCRIPT_NAME
