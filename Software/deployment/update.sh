@@ -26,8 +26,8 @@ if [ ! -f "$VERSION_FILE" ] || ! diff -q current_version "$VERSION_FILE" > /dev/
     git clone $REPO_URL
     
     # Entrer dans le dossier du dépôt
-    cd $REPO_NAME/$SOFT_NAME
-    
+    cd $REPO_NAME/$SRC_DIR
+
     # Rendre le script exécutable
     chmod +x ./run/$SCRIPT_NAME
     
