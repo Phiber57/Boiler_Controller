@@ -3,8 +3,8 @@
 # Définir les variables
 REPO_URL="https://github.com/Phiber57/Boiler_Controller.git"
 REPO_NAME=$(basename $REPO_URL .git)
-SCRIPT_NAME="boiler_gateway.sh"
-WORK_DIR="."
+SCRIPT_NAME="run.sh"
+WORK_DIR="boiler"
 VERSION_FILE="$WORK_DIR/last_version"
 
 # Créer le dossier de travail s'il n'existe pas
