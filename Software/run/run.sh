@@ -1,1 +1,1 @@
-python ../gateway.py
+python ./Software/Gateway_Mqtt/gateway.py
