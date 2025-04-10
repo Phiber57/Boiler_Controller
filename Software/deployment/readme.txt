@@ -16,4 +16,5 @@ sudo apt-get install -y build-essential tk-dev libncurses5-dev libncursesw5-dev 
 installer manuellement les librairies.
 sudo apt install python3.11-venv
 python -m venv env_boiler
+source ./env_boiler/bin/activate
 pip3 install paho-mqtt
