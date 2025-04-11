@@ -15,6 +15,7 @@ cd $WORK_DIR
 # Vérifier la dernière version du dépôt
 git ls-remote $REPO_URL HEAD | awk '{print $1}' > current_version
 
+
 # Comparer avec la version précédente
 if [ ! -f "$VERSION_FILE" ] || ! diff -q current_version "$VERSION_FILE" > /dev/null 2>&1; then
     echo "Nouvelle version détectée. Mise à jour et exécution du script..."
@@ -29,7 +30,7 @@ if [ ! -f "$VERSION_FILE" ] || ! diff -q current_version "$VERSION_FILE" > /dev/
     cd $REPO_NAME/$SRC_DIR
 
     # Rendre le script exécutable
-    sudo chmod +x ./run/$SCRIPT_NAME
+    chmod +x ./run/$SCRIPT_NAME
     
     # Exécuter le script
     ./run/$SCRIPT_NAME

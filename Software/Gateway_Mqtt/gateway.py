@@ -97,7 +97,8 @@ def on_connect(client, userdata, flags, rc):
 # Callback - Réception d'un message
 def on_message(client, userdata, msg):
     print(f"Message reçu sur {msg.topic} : {msg.payload.decode()}")
-                                                                    
+    messageOk = False
+
     if msg.topic == TOPIC_PUB_BOILER:
         print ("TOPIC_PUB_BOILER")
 
@@ -106,20 +107,14 @@ def on_message(client, userdata, msg):
         buffer = bytearray(2) 
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER
         buffer[1] = BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE    
-        try:
-            client_socket.sendall(buffer)
-        except Exception as e:
-            print("Exception socket")
+        messageOk = True
 
     elif msg.topic == TOPIC_ASK_ROOM_TEMPERATURES:
         print ("TOPIC_ASK_ROOM_TEMPERATURES")
         buffer = bytearray(2)
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
         buffer[1] = BOILER_COMMAND_GET_DESIRED_ROOM_TEMPERATURES
-        try:
-            client_socket.sendall(buffer)
-        except Exception as e:
-            print("Exception socket")
+        messageOk = True
 
     elif msg.topic == TOPIC_SET_ROOM_TEMPERATURES:
         print ("TOPIC_SET_ROOM_TEMPERATURES")
@@ -132,32 +127,21 @@ def on_message(client, userdata, msg):
             buffer[1] = BOILER_COMMAND_SET_DESIRED_ROOM_TEMPERATURES
             buffer[2] = int(parameters[0]) # JOUR 
             buffer[3] = int(parameters[1]) # NUIT 
-
-            print (buffer)
-            try:
-                client_socket.sendall(buffer)
-            except Exception as e:
-                print("Exception socket")
+            messageOk = True
 
     elif msg.topic == TOPIC_ASK_HEATING_CURVE_PARAMETERS:
         print ("TOPIC_ASK_HEATING_CURVE_PARAMETERS")
         buffer = bytearray(2)
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
         buffer[1] = BOILER_COMMAND_GET_HEATING_CURVE_PARAMETERS
-        try:
-            client_socket.sendall(buffer)
-        except Exception as e:
-            print("Exception socket")
+        messageOk = True
 
     elif msg.topic == TOPIC_GET_HEATING_CURVE_PARAMETERS:
         print ("TOPIC_GET_HEATING_CURVE_PARAMETERS")
         buffer = bytearray(2) 
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
         buffer[1] = BOILER_COMMAND_GET_HEATING_CURVE_PARAMETERS   
-        try:
-            client_socket.sendall(buffer)
-        except Exception as e:
-            print("Exception socket")
+        messageOk = True
 
     elif msg.topic == TOPIC_SET_HEATING_CURVE_PARAMETERS:
         print ("TOPIC_SET_HEATING_CURVE_PARAMETERS")
@@ -169,41 +153,39 @@ def on_message(client, userdata, msg):
             buffer[1] = BOILER_COMMAND_SET_HEATING_CURVE_PARAMETERS
             buffer.append(int_to_bytes(parameters[0])) # 16 bits
             buffer.append(int_to_bytes(parameters[1])) # 16 bits
-            try:
-                client_socket.sendall(buffer)
-            except Exception as e:
-                print("Exception socket")
+            messageOk = True
             
     elif msg.topic == TOPIC_ASK_BOILER_RUNNING_MODE:
         buffer = bytearray(2)  # Crée un buffer mutable de 2 octets, initialisé à b'\x00\x00'
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
         buffer[1] = BOILER_COMMAND_GET_BOILER_RUNNING_MODE
-
-        try:
-            client_socket.sendall(buffer)
-        except Exception as e:
-            print("Exception socket")
+        messageOk = True
 
     elif msg.topic == TOPIC_SET_BOILER_RUNNING_MODE:
         buffer = bytearray(3)  # Crée un buffer mutable de 2 octets, initialisé à b'\x00\x00'
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
         buffer[1] = BOILER_COMMAND_SET_BOILER_RUNNING_MODE
-
+        
         if msg.payload.decode() == "0":
             buffer[2] = 0x00
             print("TOPIC_SET_BOILER_RUNNING_MODE 0")
+            messageOk = True
         elif msg.payload.decode() == "1":
             buffer[2] = 0x01
             print("TOPIC_SET_BOILER_RUNNING_MODE 1")
+            messageOk = True
+    else:
+        messageOk = False
+
+    if messageOk == True:
         try:
             client_socket.sendall(buffer)
+            analyse_boiler(1)
         except Exception as e:
             print("Exception socket")
 
-
-
-
-
+        print(f"Fin traitement sur {msg.topic}")
+    
 
 # Initialisation du client MQTT
 client = mqtt.Client()
@@ -218,10 +200,10 @@ while bSocketClientConnected == False:
     try:
         client.connect(BROKER, PORT)
         client.username_pw_set(username=MQTT_USERNAME, password=MQTT_PASSWORD)
-        bSocketServeurCreated = True
+        bSocketClientConnected = True
     except Exception as e:
         print("Exception socket")
-        time.sleep(3)
+        time.sleep(10)
     
 bSocketServeurCreated = False
 
@@ -231,15 +213,17 @@ while bSocketServeurCreated == False:
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_socket.bind((SERVEUR_TCP, PORT_TCP))
         server_socket.listen(1)  # Écoute jusqu'à 1 connexion simultanée
+       
         client_socket_connecte = False
         bSocketServeurCreated = True
     except Exception as e:
         print("Exception socket")
-        time.sleep(3)
+        time.sleep(10)
 
-def analyse_boiler():
+def analyse_boiler(timeout=1):
     global client_socket_connecte
     try:
+        client_socket.settimeout(timeout)
         data = client_socket.recv(1024)  # Taille maximale des données : 1024 octets        
         if not data:
             print("Client déconnecté.")
@@ -258,7 +242,6 @@ def analyse_boiler():
             json_dict = {key: value for key, value in zip(custom_keys, trameDecodee)}
             json_string = json.dumps(json_dict, indent=4)
 
-
             if (int(data[0]) == int(BOILER_PROTOCOL_MAGIC_NUMBER)):
                 if (data[1] == int(BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE)):
                     publier_message(TOPIC_START_WATER_OUTSIDE_TEMPERATURES, json_string)   
@@ -268,6 +251,8 @@ def analyse_boiler():
                     publier_message(TOPIC_GET_HEATING_CURVE_PARAMETERS, json_string)
                 elif (data[1] == BOILER_COMMAND_GET_BOILER_RUNNING_MODE):
                     publier_message(TOPIC_GET_BOILER_RUNNING_MODE, json_string) 
+    except socket.timeout:
+        print(f"Pas de donnees")
     except Exception as e:
         print(e)
         client_socket_connecte = False
@@ -283,12 +268,20 @@ def interrogation_boiler():
     except Exception as e:
         print("Exception socket")
     
-    time.sleep(1)
+    analyse_boiler(3)
+
     
     buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
     buffer[1] = BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE
 
-    time.sleep(1)
+    
+    try:
+        client_socket.sendall(buffer)
+    except Exception as e:
+        print("Exception socket")
+    
+    analyse_boiler(3)
+    
     
     buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
     buffer[1] = BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE
@@ -298,7 +291,7 @@ def interrogation_boiler():
     except Exception as e:
         print("Exception socket")
 
-
+    analyse_boiler(3)
 
 # Fonction pour publier un message
 def publier_message(topic, message):
@@ -314,26 +307,28 @@ i = 0
 try:
     while True:
         try:
-            print("Attente connexion TCP.")
+            print(f"Attente connexion TCP.")
+            time.sleep(2)
             client_socket, client_address = server_socket.accept()
             print (client_socket)
             client_socket_connecte = True
             time.sleep(1)
             
-            #interrogation_boiler()
+            #preimiere interrogation apres la connexion
+            interrogation_boiler()
             
+            i = 0
             while client_socket_connecte == True:
-                analyse_boiler()
-                time.sleep(10 / 1000)
+                
+                analyse_boiler(1)
                 i = i + 1
-                print(i)
-                if i > 50:
+                #print(i)
+                if i > 60: 
                     print("------------------------------------")
                     print(i)
                     interrogation_boiler()
                     i = 0
                     
-
         finally:
             client_socket_connecte = False
             client_socket.close()
