@@ -1,12 +1,13 @@
 #!/bin/bash
 
-# Vérifier si l'URL du repo est fournie
-if [ $# -eq 0 ]; then
-    echo "Usage: ./clone_project.sh <URL_DU_REPO>"
+# Vérifier si les paramètres requis sont fournis
+if [ $# -lt 2 ]; then
+    echo "Usage: ./clone_project.sh <URL_DU_REPO> <FICHIER_PYTHON>"
     exit 1
 fi
 
 REPO_URL=$1
+PYTHON_FILE=$2
 PROJECT_DIR="project"
 
 # Sauvegarder les credentials s'ils existent
@@ -52,11 +53,11 @@ if [ -f "requirements.txt" ]; then
     pip install -r requirements.txt
 fi
 
-# Exécuter le script Python s'il existe
-if [ -f "server.py" ]; then
-    echo "Démarrage du serveur Python..."
-    python3 server.py
+# Exécuter le script Python spécifié
+if [ -f "$PYTHON_FILE" ]; then
+    echo "Démarrage du programme Python $PYTHON_FILE..."
+    python3 "$PYTHON_FILE"
 else
-    echo "Erreur: server.py non trouvé"
+    echo "Erreur: $PYTHON_FILE non trouvé"
     exit 1
 fi
