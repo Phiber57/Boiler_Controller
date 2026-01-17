@@ -179,7 +179,7 @@ def on_message(client, userdata, msg):
         
         buffer = bytearray(2) 
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
-        buffer[1] = TOPIC_GET_SENSORS_RAW_TEMPERATURES
+        buffer[1] = BOILER_COMMAND_GET_SENSORS_RAW_TEMPERATURES
         messageOk = True
         print (f"Buffer {buffer}")
 
