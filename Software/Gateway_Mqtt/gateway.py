@@ -44,6 +44,9 @@ TOPIC_GET_HEATING_CURVE_PARAMETERS = "gatewayBBA/get_heating_curve_parameters"  
 TOPIC_SET_HEATING_CURVE_PARAMETERS = "gatewayBBA/set_heating_curve_parameters"          # Paramètre de la courbe de la loi d'eau (coefficient et parallel shift)
 
 
+
+TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES = "gatewayBBA/get_sensors_celcius_temperatures"
+
 BOILER_PROTOCOL_MAGIC_NUMBER=0xA5
 
 BOILER_COMMAND_GET_FIRMWARE_VERSION=0
@@ -155,6 +158,18 @@ def on_message(client, userdata, msg):
             buffer.append(int_to_bytes(parameters[1])) # 16 bits
             messageOk = True
             
+    elif msg.topic == TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES:
+        print ("TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES")
+        
+        parameters = msg.payload.decode().split(',')
+        if len(parameters) == 2:
+            buffer = bytearray(6) 
+            buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
+            buffer[1] = BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES
+            buffer.append(int_to_bytes(parameters[0])) # 16 bits
+            buffer.append(int_to_bytes(parameters[1])) # 16 bits
+            messageOk = True
+
     elif msg.topic == TOPIC_ASK_BOILER_RUNNING_MODE:
         buffer = bytearray(2)  # Crée un buffer mutable de 2 octets, initialisé à b'\x00\x00'
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
