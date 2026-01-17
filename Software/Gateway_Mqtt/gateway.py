@@ -39,31 +39,30 @@ TOPIC_ASK_START_WATER_OUTSIDE_TEMPERATURES = "gatewayBBA/ask_start_water_tempera
 TOPIC_START_WATER_OUTSIDE_TEMPERATURES = "gatewayBBA/get_start_water_temperature"   # Temperature à la sortie du boiler(correspond à la temperature du depart des radiateurs) 
                                                                                 # et la température de la sonde extérieure
 
-TOPIC_ASK_HEATING_CURVE_PARAMETERS = "gatewayBBA/ask_heating_curve_parameters"
+#TOPIC_ASK_HEATING_CURVE_PARAMETERS = "gatewayBBA/ask_heating_curve_parameters"
 TOPIC_GET_HEATING_CURVE_PARAMETERS = "gatewayBBA/get_heating_curve_parameters"          # Paramètre de la courbe de la loi d'eau (coefficient et parallel shift)
 TOPIC_SET_HEATING_CURVE_PARAMETERS = "gatewayBBA/set_heating_curve_parameters"          # Paramètre de la courbe de la loi d'eau (coefficient et parallel shift)
 
 
-
 TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES = "gatewayBBA/get_sensors_celcius_temperatures"
+TOPIC_GET_SENSORS_RAW_TEMPERATURES = "gatewayBBA/get_sensors_raw_temperatures"
 
 BOILER_PROTOCOL_MAGIC_NUMBER=0xA5
 
 BOILER_COMMAND_GET_FIRMWARE_VERSION=0
-BOILER_COMMAND_GET_SENSORS_RAW_TEMPERATURES=1
-BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES=2
+BOILER_COMMAND_GET_SENSORS_RAW_TEMPERATURES=1 #TOPIC_GET_SENSORS_RAW_TEMPERATURES
+BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES=2 #TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES
 BOILER_COMMAND_GET_MIXING_VALVE_POSITION=3
 BOILER_COMMAND_SET_NIGHT_MODE=4
-BOILER_COMMAND_GET_DESIRED_ROOM_TEMPERATURES=5 #
-BOILER_COMMAND_SET_DESIRED_ROOM_TEMPERATURES=6 #
+BOILER_COMMAND_GET_DESIRED_ROOM_TEMPERATURES=5 # TOPIC_GET_ROOM_TEMPERATURES
+BOILER_COMMAND_SET_DESIRED_ROOM_TEMPERATURES=6 # TOPIC_SET_ROOM_TEMPERATURES
 BOILER_COMMAND_GET_TRIMMERS_RAW_VALUES=7
-BOILER_COMMAND_GET_BOILER_RUNNING_MODE=8 #
-BOILER_COMMAND_SET_BOILER_RUNNING_MODE=9 #
+BOILER_COMMAND_GET_BOILER_RUNNING_MODE=8 # TOPIC_GET_BOILER_RUNNING_MODE
+BOILER_COMMAND_SET_BOILER_RUNNING_MODE=9 # TOPIC_SET_BOILER_RUNNING_MODE
 BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE=10 # TOPIC_START_WATER_OUTSIDE_TEMPERATURES
-BOILER_COMMAND_GET_HEATING_CURVE_PARAMETERS=11
-BOILER_COMMAND_SET_HEATING_CURVE_PARAMETERS=12
+BOILER_COMMAND_GET_HEATING_CURVE_PARAMETERS=11 #TOPIC_GET_HEATING_CURVE_PARAMETERS
+BOILER_COMMAND_SET_HEATING_CURVE_PARAMETERS=12 #TOPIC_SET_HEATING_CURVE_PARAMETERS
 BOILER_COMMANDS_COUNT=13
-
 
 def int_to_bytes(value):
     """Convertit un entier en un buffer de 2 octets."""
@@ -92,8 +91,10 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(TOPIC_SET_HEATING_CURVE_PARAMETERS)
         client.subscribe(TOPIC_ASK_ROOM_TEMPERATURES)
         client.subscribe(TOPIC_ASK_START_WATER_OUTSIDE_TEMPERATURES)
-        client.subscribe(TOPIC_ASK_HEATING_CURVE_PARAMETERS)
+        #client.subscribe(TOPIC_ASK_HEATING_CURVE_PARAMETERS)
         client.subscribe(TOPIC_SET_BOILER_RUNNING_MODE)
+        client.subscribe(TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES)
+        client.subscribe(TOPIC_GET_SENSORS_RAW_TEMPERATURES)
     else:
         print(f"Erreur de connexion. Code : {rc}")
 
@@ -132,12 +133,12 @@ def on_message(client, userdata, msg):
             buffer[3] = int(parameters[1]) # NUIT 
             messageOk = True
 
-    elif msg.topic == TOPIC_ASK_HEATING_CURVE_PARAMETERS:
-        print ("TOPIC_ASK_HEATING_CURVE_PARAMETERS")
-        buffer = bytearray(2)
-        buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
-        buffer[1] = BOILER_COMMAND_GET_HEATING_CURVE_PARAMETERS
-        messageOk = True
+    #elif msg.topic == TOPIC_ASK_HEATING_CURVE_PARAMETERS:
+    #    print ("TOPIC_ASK_HEATING_CURVE_PARAMETERS")
+    #    buffer = bytearray(2)
+    #    buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
+    #    buffer[1] = BOILER_COMMAND_GET_HEATING_CURVE_PARAMETERS
+    #    messageOk = True
 
     elif msg.topic == TOPIC_GET_HEATING_CURVE_PARAMETERS:
         print ("TOPIC_GET_HEATING_CURVE_PARAMETERS")
@@ -166,9 +167,18 @@ def on_message(client, userdata, msg):
             buffer = bytearray(6) 
             buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
             buffer[1] = BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES
-            buffer.append(int_to_bytes(parameters[0])) # 16 bits
-            buffer.append(int_to_bytes(parameters[1])) # 16 bits
             messageOk = True
+
+    elif msg.topic == TOPIC_GET_SENSORS_RAW_TEMPERATURES:
+        print ("TOPIC_GET_SENSORS_RAW_TEMPERATURES")
+        
+        parameters = msg.payload.decode().split(',')
+        if len(parameters) == 2:
+            buffer = bytearray(6) 
+            buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
+            buffer[1] = BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES
+            messageOk = True
+
 
     elif msg.topic == TOPIC_ASK_BOILER_RUNNING_MODE:
         buffer = bytearray(2)  # Crée un buffer mutable de 2 octets, initialisé à b'\x00\x00'
