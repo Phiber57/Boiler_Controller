@@ -280,6 +280,11 @@ def analyse_boiler(timeout=1):
                     publier_message(TOPIC_GET_HEATING_CURVE_PARAMETERS, json_string)
                 elif (data[1] == BOILER_COMMAND_GET_BOILER_RUNNING_MODE):
                     publier_message(TOPIC_GET_BOILER_RUNNING_MODE, json_string) 
+                elif (data[1] == BOILER_COMMAND_GET_SENSORS_RAW_TEMPERATURES):
+                    publier_message(BOILER_COMMAND_GET_SENSORS_RAW_TEMPERATURES, json_string) 
+                elif (data[1] == BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES):
+                    publier_message(BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES, json_string) 
+
     except socket.timeout:
         print(f"Pas de donnees")
     except Exception as e:
