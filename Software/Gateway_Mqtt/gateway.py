@@ -165,12 +165,11 @@ def on_message(client, userdata, msg):
         print (f"parameters {parameters}")
         print (f"len(parameters) {len(parameters)}")
         
-        if len(parameters) == 2:
-            buffer = bytearray(2) 
-            buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
-            buffer[1] = BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES
-            messageOk = True
-            print (f"Buffer {buffer}")
+        buffer = bytearray(2) 
+        buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
+        buffer[1] = BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES
+        messageOk = True
+        print (f"Buffer {buffer}")
 
     elif msg.topic == TOPIC_GET_SENSORS_RAW_TEMPERATURES:
         print ("TOPIC_GET_SENSORS_RAW_TEMPERATURES")
@@ -178,12 +177,11 @@ def on_message(client, userdata, msg):
         print (f"parameters {parameters}")
         print (f"len(parameters) {len(parameters)}")
         
-        if len(parameters) == 2:
-            buffer = bytearray(2) 
-            buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
-            buffer[1] = BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES
-            messageOk = True
-            print (f"Buffer {buffer}")
+        buffer = bytearray(2) 
+        buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
+        buffer[1] = BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES
+        messageOk = True
+        print (f"Buffer {buffer}")
 
 
     elif msg.topic == TOPIC_ASK_BOILER_RUNNING_MODE:
