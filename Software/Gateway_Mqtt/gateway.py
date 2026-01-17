@@ -161,6 +161,8 @@ def on_message(client, userdata, msg):
             
     elif msg.topic == TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES:
         print ("TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES")
+        print (f"parameters {parameters}")
+        print (f"len(parameters) {len(parameters)}")
         
         parameters = msg.payload.decode().split(',')
         if len(parameters) == 2:
@@ -172,7 +174,10 @@ def on_message(client, userdata, msg):
 
     elif msg.topic == TOPIC_GET_SENSORS_RAW_TEMPERATURES:
         print ("TOPIC_GET_SENSORS_RAW_TEMPERATURES")
+        print (f"parameters {parameters}")
+        print (f"len(parameters) {len(parameters)}")
         
+
         parameters = msg.payload.decode().split(',')
         if len(parameters) == 2:
             buffer = bytearray(2) 
