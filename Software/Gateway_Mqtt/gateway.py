@@ -6,6 +6,7 @@ import json
 import credential
 import credential.credential
 import time
+import traceback
 
 # Configuration mqtt : fill variabes (BROKER, MQTT_USERNAME, MQTT_PASSWORD)  in a file named credential/credential.py
 BROKER=credential.credential.BROKER
@@ -163,8 +164,7 @@ def on_message(client, userdata, msg):
         print ("TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES")
         parameters = msg.payload.decode().split(',')
         print (f"parameters {parameters}")
-        print (f"len(parameters) {len(parameters)}")
-        
+
         buffer = bytearray(2) 
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
         buffer[1] = BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES
@@ -175,7 +175,6 @@ def on_message(client, userdata, msg):
         print ("TOPIC_GET_SENSORS_RAW_TEMPERATURES")
         parameters = msg.payload.decode().split(',')
         print (f"parameters {parameters}")
-        print (f"len(parameters) {len(parameters)}")
         
         buffer = bytearray(2) 
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
@@ -208,10 +207,14 @@ def on_message(client, userdata, msg):
 
     if messageOk == True:
         try:
+            print("Envoi message a la carte")
             client_socket.sendall(buffer)
-            analyse_boiler(1)
+            print("Attente reponse")
+            analyse_boiler(3)
+            print("Fin traitement de la reponse ")
+
         except Exception as e:
-            print("Exception socket")
+            print(f"Exception socket")
 
         print(f"Fin traitement sur {msg.topic}")
     
@@ -259,17 +262,18 @@ def analyse_boiler(timeout=1):
             client_socket_connecte = False
             client_socket.close()
         else:
-            print (data)
-            print (int(data[0]))
-            print (int(BOILER_PROTOCOL_MAGIC_NUMBER))
-            
+            print( f"Trame recu : {data}")
+
+            print (f"Magic : {int(data[0])} {int(BOILER_PROTOCOL_MAGIC_NUMBER)}" )
             trameDecodee =  [byte for byte in data]
             
-            print(trameDecodee)
+            print( f"Trame decodee : {trameDecodee}")
 
             custom_keys = ["magicNumber", "key", "value1", "value2", "value3", "value4"]
             json_dict = {key: value for key, value in zip(custom_keys, trameDecodee)}
             json_string = json.dumps(json_dict, indent=4)
+
+            print( f"json_string : {json_string}")
 
             if (int(data[0]) == int(BOILER_PROTOCOL_MAGIC_NUMBER)):
                 if (data[1] == int(BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE)):
@@ -281,14 +285,16 @@ def analyse_boiler(timeout=1):
                 elif (data[1] == BOILER_COMMAND_GET_BOILER_RUNNING_MODE):
                     publier_message(TOPIC_GET_BOILER_RUNNING_MODE, json_string) 
                 elif (data[1] == BOILER_COMMAND_GET_SENSORS_RAW_TEMPERATURES):
-                    publier_message(BOILER_COMMAND_GET_SENSORS_RAW_TEMPERATURES, json_string) 
+                    publier_message(TOPIC_GET_SENSORS_RAW_TEMPERATURES, json_string) 
                 elif (data[1] == BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES):
-                    publier_message(BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES, json_string) 
+                    publier_message(TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES, json_string) 
 
+            print (f"Message publie {int(data[1])}")
+        
     except socket.timeout:
         print(f"Pas de donnees")
     except Exception as e:
-        print(e)
+        print(f"Exception {e}")
         client_socket_connecte = False
 
 
@@ -300,19 +306,17 @@ def interrogation_boiler():
     try:
         client_socket.sendall(buffer)
     except Exception as e:
-        print("Exception socket")
+        print(f"Exception socket {e}")
     
     analyse_boiler(3)
 
-    
     buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
     buffer[1] = BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE
 
-    
     try:
         client_socket.sendall(buffer)
     except Exception as e:
-        print("Exception socket")
+        print(f"Exception socket {e}")
     
     analyse_boiler(3)
     
@@ -323,14 +327,36 @@ def interrogation_boiler():
     try:
         client_socket.sendall(buffer)
     except Exception as e:
-        print("Exception socket")
+        print("Exception socket {e}")
 
     analyse_boiler(3)
 
 # Fonction pour publier un message
+#def publier_message(topic, message):
+#    client.publish(topic, message)
+#    print(f"Message publié sur {topic} : {message}")
+
+
 def publier_message(topic, message):
-    client.publish(topic, message)
-    print(f"Message publié sur {topic} : {message}")
+    try:
+        # S'assurer que c'est une chaîne JSON
+        if isinstance(message, dict):
+            message_str = json.dumps(message)
+        else:
+            message_str = str(message)
+        
+        print(f"Type du message: {type(message_str)}")
+        print(f"Contenu: {message_str}")
+        
+        # Publier
+        result = client.publish(topic, message_str)
+        print(f"Message publié sur {topic} : {message_str}")
+        print(f"Résultat: {result}")
+        
+    except Exception as e:
+        print(f"Erreur lors de la publication: {e}")
+        traceback.print_exc()
+
 
 # Boucle réseau dans un thread séparé
 client.loop_start()
