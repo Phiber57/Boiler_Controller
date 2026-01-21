@@ -48,7 +48,7 @@ TOPIC_SET_HEATING_CURVE_PARAMETERS = "gatewayBBA/set_heating_curve_parameters"  
 TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES = "gatewayBBA/get_sensors_celcius_temperatures"
 TOPIC_GET_SENSORS_RAW_TEMPERATURES = "gatewayBBA/get_sensors_raw_temperatures"
 
-TOPIC_GET_MIXING_VALVE_POSITION = "gatewayBBA/get_MIXING_VALVE_POSITION"
+TOPIC_GET_MIXING_VALVE_POSITION = "gatewayBBA/get_mixing_valve_position"
 
 BOILER_PROTOCOL_MAGIC_NUMBER=0xA5
 
