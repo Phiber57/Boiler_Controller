@@ -48,12 +48,14 @@ TOPIC_SET_HEATING_CURVE_PARAMETERS = "gatewayBBA/set_heating_curve_parameters"  
 TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES = "gatewayBBA/get_sensors_celcius_temperatures"
 TOPIC_GET_SENSORS_RAW_TEMPERATURES = "gatewayBBA/get_sensors_raw_temperatures"
 
+TOPIC_GET_MIXING_VALVE_POSITION = "gatewayBBA/get_MIXING_VALVE_POSITION"
+
 BOILER_PROTOCOL_MAGIC_NUMBER=0xA5
 
 BOILER_COMMAND_GET_FIRMWARE_VERSION=0
 BOILER_COMMAND_GET_SENSORS_RAW_TEMPERATURES=1 #TOPIC_GET_SENSORS_RAW_TEMPERATURES
 BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES=2 #TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES
-BOILER_COMMAND_GET_MIXING_VALVE_POSITION=3
+BOILER_COMMAND_GET_MIXING_VALVE_POSITION=3 #TOPIC_GET_MIXING_VALVE_POSITION
 BOILER_COMMAND_SET_NIGHT_MODE=4
 BOILER_COMMAND_GET_DESIRED_ROOM_TEMPERATURES=5 # TOPIC_GET_ROOM_TEMPERATURES
 BOILER_COMMAND_SET_DESIRED_ROOM_TEMPERATURES=6 # TOPIC_SET_ROOM_TEMPERATURES
@@ -164,12 +166,22 @@ def on_message(client, userdata, msg):
         print ("TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES")
         parameters = msg.payload.decode().split(',')
         print (f"parameters {parameters}")
-
         buffer = bytearray(2) 
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
         buffer[1] = BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES
         messageOk = True
         print (f"Buffer {buffer}")
+
+    elif msg.topic == TOPIC_GET_MIXING_VALVE_POSITION:
+        print ("TOPIC_GET_MIXING_VALVE_POSITION")
+        parameters = msg.payload.decode().split(',')
+        print (f"parameters {parameters}")
+        buffer = bytearray(2) 
+        buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
+        buffer[1] = BOILER_COMMAND_GET_MIXING_VALVE_POSITION
+        messageOk = True
+        print (f"Buffer {buffer}")
+
 
     elif msg.topic == TOPIC_GET_SENSORS_RAW_TEMPERATURES:
         print ("TOPIC_GET_SENSORS_RAW_TEMPERATURES")
@@ -288,7 +300,8 @@ def analyse_boiler(timeout=1):
                     publier_message(TOPIC_GET_SENSORS_RAW_TEMPERATURES, json_string) 
                 elif (data[1] == BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES):
                     publier_message(TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES, json_string) 
-
+                elif (data[1] == BOILER_COMMAND_GET_MIXING_VALVE_POSITION):
+                    publier_message(TOPIC_GET_MIXING_VALVE_POSITION, json_string)     
             print (f"Message publie {int(data[1])}")
         
     except socket.timeout:
