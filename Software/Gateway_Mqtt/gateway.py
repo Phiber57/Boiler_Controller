@@ -38,9 +38,9 @@ TOPIC_SET_ROOM_TEMPERATURES = "gatewayBBA/set_room_temperatures" # Temperature j
 
 TOPIC_ASK_START_WATER_OUTSIDE_TEMPERATURES = "gatewayBBA/ask_start_water_temperatures" 
 TOPIC_START_WATER_OUTSIDE_TEMPERATURES = "gatewayBBA/get_start_water_temperature"   # Temperature à la sortie du boiler(correspond à la temperature du depart des radiateurs) 
-                                                                                # et la température de la sonde extérieure
+                                                                                    # et la température de la sonde extérieure
 
-#TOPIC_ASK_HEATING_CURVE_PARAMETERS = "gatewayBBA/ask_heating_curve_parameters"
+TOPIC_ASK_HEATING_CURVE_PARAMETERS = "gatewayBBA/ask_heating_curve_parameters"
 TOPIC_GET_HEATING_CURVE_PARAMETERS = "gatewayBBA/get_heating_curve_parameters"          # Paramètre de la courbe de la loi d'eau (coefficient et parallel shift)
 TOPIC_SET_HEATING_CURVE_PARAMETERS = "gatewayBBA/set_heating_curve_parameters"          # Paramètre de la courbe de la loi d'eau (coefficient et parallel shift)
 
@@ -95,7 +95,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(TOPIC_SET_HEATING_CURVE_PARAMETERS)
         client.subscribe(TOPIC_ASK_ROOM_TEMPERATURES)
         client.subscribe(TOPIC_ASK_START_WATER_OUTSIDE_TEMPERATURES)
-        #client.subscribe(TOPIC_ASK_HEATING_CURVE_PARAMETERS)
+        client.subscribe(TOPIC_ASK_HEATING_CURVE_PARAMETERS)
         client.subscribe(TOPIC_SET_BOILER_RUNNING_MODE)
         client.subscribe(TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES)
         client.subscribe(TOPIC_GET_SENSORS_RAW_TEMPERATURES)
@@ -138,12 +138,12 @@ def on_message(client, userdata, msg):
             buffer[3] = int(parameters[1]) # NUIT 
             messageOk = True
 
-    #elif msg.topic == TOPIC_ASK_HEATING_CURVE_PARAMETERS:
-    #    print ("TOPIC_ASK_HEATING_CURVE_PARAMETERS")
-    #    buffer = bytearray(2)
-    #    buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
-    #    buffer[1] = BOILER_COMMAND_GET_HEATING_CURVE_PARAMETERS
-    #    messageOk = True
+    elif msg.topic == TOPIC_ASK_HEATING_CURVE_PARAMETERS:
+        print ("TOPIC_ASK_HEATING_CURVE_PARAMETERS")
+        buffer = bytearray(2)
+        buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
+        buffer[1] = BOILER_COMMAND_GET_HEATING_CURVE_PARAMETERS
+        messageOk = True
 
     elif msg.topic == TOPIC_GET_HEATING_CURVE_PARAMETERS:
         print ("TOPIC_GET_HEATING_CURVE_PARAMETERS")
@@ -336,7 +336,7 @@ def interrogation_boiler():
     
     
     buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
-    buffer[1] = BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE
+    buffer[1] = BOILER_COMMAND_GET_MIXING_VALVE_POSITION
 
     try:
         client_socket.sendall(buffer)
@@ -344,6 +344,9 @@ def interrogation_boiler():
         print("Exception socket {e}")
 
     analyse_boiler(3)
+
+
+
 
 # Fonction pour publier un message
 #def publier_message(topic, message):
