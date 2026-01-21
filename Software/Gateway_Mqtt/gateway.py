@@ -98,6 +98,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(TOPIC_SET_BOILER_RUNNING_MODE)
         client.subscribe(TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES)
         client.subscribe(TOPIC_GET_SENSORS_RAW_TEMPERATURES)
+        client.subscribe(TOPIC_GET_MIXING_VALVE_POSITION)
     else:
         print(f"Erreur de connexion. Code : {rc}")
 
