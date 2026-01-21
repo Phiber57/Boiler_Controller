@@ -98,7 +98,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(TOPIC_SET_BOILER_RUNNING_MODE)
         client.subscribe(TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES)
         client.subscribe(TOPIC_GET_SENSORS_RAW_TEMPERATURES)
-        client.subscribe(TOPIC_GET_MIXING_VALVE_POSITION)
+        #client.subscribe(TOPIC_GET_MIXING_VALVE_POSITION)
     else:
         print(f"Erreur de connexion. Code : {rc}")
 
@@ -182,7 +182,6 @@ def on_message(client, userdata, msg):
         buffer[1] = BOILER_COMMAND_GET_MIXING_VALVE_POSITION
         messageOk = True
         print (f"Buffer {buffer}")
-
 
     elif msg.topic == TOPIC_GET_SENSORS_RAW_TEMPERATURES:
         print ("TOPIC_GET_SENSORS_RAW_TEMPERATURES")
