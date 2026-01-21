@@ -48,6 +48,7 @@ TOPIC_SET_HEATING_CURVE_PARAMETERS = "gatewayBBA/set_heating_curve_parameters"  
 TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES = "gatewayBBA/get_sensors_celcius_temperatures"
 TOPIC_GET_SENSORS_RAW_TEMPERATURES = "gatewayBBA/get_sensors_raw_temperatures"
 
+TOPIC_ASK_MIXING_VALVE_POSITION = "gatewayBBA/ask_mixing_valve_position"
 TOPIC_GET_MIXING_VALVE_POSITION = "gatewayBBA/get_mixing_valve_position"
 
 BOILER_PROTOCOL_MAGIC_NUMBER=0xA5
@@ -98,7 +99,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(TOPIC_SET_BOILER_RUNNING_MODE)
         client.subscribe(TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES)
         client.subscribe(TOPIC_GET_SENSORS_RAW_TEMPERATURES)
-        client.subscribe(TOPIC_GET_MIXING_VALVE_POSITION)
+        client.subscribe(TOPIC_ASK_MIXING_VALVE_POSITION)
     else:
         print(f"Erreur de connexion. Code : {rc}")
 
@@ -173,7 +174,7 @@ def on_message(client, userdata, msg):
         messageOk = True
         print (f"Buffer {buffer}")
 
-    elif msg.topic == TOPIC_GET_MIXING_VALVE_POSITION:
+    elif msg.topic == TOPIC_ASK_MIXING_VALVE_POSITION:
         print ("TOPIC_GET_MIXING_VALVE_POSITION")
         parameters = msg.payload.decode().split(',')
         print (f"parameters {parameters}")
