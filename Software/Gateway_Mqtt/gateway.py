@@ -6,6 +6,7 @@ import json
 import credential
 import credential.credential
 import time
+import traceback
 
 # Configuration mqtt : fill variabes (BROKER, MQTT_USERNAME, MQTT_PASSWORD)  in a file named credential/credential.py
 BROKER=credential.credential.BROKER
@@ -37,30 +38,35 @@ TOPIC_SET_ROOM_TEMPERATURES = "gatewayBBA/set_room_temperatures" # Temperature j
 
 TOPIC_ASK_START_WATER_OUTSIDE_TEMPERATURES = "gatewayBBA/ask_start_water_temperatures" 
 TOPIC_START_WATER_OUTSIDE_TEMPERATURES = "gatewayBBA/get_start_water_temperature"   # Temperature à la sortie du boiler(correspond à la temperature du depart des radiateurs) 
-                                                                                # et la température de la sonde extérieure
+                                                                                    # et la température de la sonde extérieure
 
 TOPIC_ASK_HEATING_CURVE_PARAMETERS = "gatewayBBA/ask_heating_curve_parameters"
 TOPIC_GET_HEATING_CURVE_PARAMETERS = "gatewayBBA/get_heating_curve_parameters"          # Paramètre de la courbe de la loi d'eau (coefficient et parallel shift)
 TOPIC_SET_HEATING_CURVE_PARAMETERS = "gatewayBBA/set_heating_curve_parameters"          # Paramètre de la courbe de la loi d'eau (coefficient et parallel shift)
 
 
+TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES = "gatewayBBA/get_sensors_celcius_temperatures"
+TOPIC_GET_SENSORS_RAW_TEMPERATURES = "gatewayBBA/get_sensors_raw_temperatures"
+
+TOPIC_ASK_MIXING_VALVE_POSITION = "gatewayBBA/ask_mixing_valve_position"
+TOPIC_GET_MIXING_VALVE_POSITION = "gatewayBBA/get_mixing_valve_position"
+
 BOILER_PROTOCOL_MAGIC_NUMBER=0xA5
 
 BOILER_COMMAND_GET_FIRMWARE_VERSION=0
-BOILER_COMMAND_GET_SENSORS_RAW_TEMPERATURES=1
-BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES=2
-BOILER_COMMAND_GET_MIXING_VALVE_POSITION=3
+BOILER_COMMAND_GET_SENSORS_RAW_TEMPERATURES=1 #TOPIC_GET_SENSORS_RAW_TEMPERATURES
+BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES=2 #TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES
+BOILER_COMMAND_GET_MIXING_VALVE_POSITION=3 #TOPIC_GET_MIXING_VALVE_POSITION
 BOILER_COMMAND_SET_NIGHT_MODE=4
-BOILER_COMMAND_GET_DESIRED_ROOM_TEMPERATURES=5 #
-BOILER_COMMAND_SET_DESIRED_ROOM_TEMPERATURES=6 #
+BOILER_COMMAND_GET_DESIRED_ROOM_TEMPERATURES=5 # TOPIC_GET_ROOM_TEMPERATURES
+BOILER_COMMAND_SET_DESIRED_ROOM_TEMPERATURES=6 # TOPIC_SET_ROOM_TEMPERATURES
 BOILER_COMMAND_GET_TRIMMERS_RAW_VALUES=7
-BOILER_COMMAND_GET_BOILER_RUNNING_MODE=8 #
-BOILER_COMMAND_SET_BOILER_RUNNING_MODE=9 #
+BOILER_COMMAND_GET_BOILER_RUNNING_MODE=8 # TOPIC_GET_BOILER_RUNNING_MODE
+BOILER_COMMAND_SET_BOILER_RUNNING_MODE=9 # TOPIC_SET_BOILER_RUNNING_MODE
 BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE=10 # TOPIC_START_WATER_OUTSIDE_TEMPERATURES
-BOILER_COMMAND_GET_HEATING_CURVE_PARAMETERS=11
-BOILER_COMMAND_SET_HEATING_CURVE_PARAMETERS=12
+BOILER_COMMAND_GET_HEATING_CURVE_PARAMETERS=11 #TOPIC_GET_HEATING_CURVE_PARAMETERS
+BOILER_COMMAND_SET_HEATING_CURVE_PARAMETERS=12 #TOPIC_SET_HEATING_CURVE_PARAMETERS
 BOILER_COMMANDS_COUNT=13
-
 
 def int_to_bytes(value):
     """Convertit un entier en un buffer de 2 octets."""
@@ -91,6 +97,9 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(TOPIC_ASK_START_WATER_OUTSIDE_TEMPERATURES)
         client.subscribe(TOPIC_ASK_HEATING_CURVE_PARAMETERS)
         client.subscribe(TOPIC_SET_BOILER_RUNNING_MODE)
+        client.subscribe(TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES)
+        client.subscribe(TOPIC_GET_SENSORS_RAW_TEMPERATURES)
+        client.subscribe(TOPIC_ASK_MIXING_VALVE_POSITION)
     else:
         print(f"Erreur de connexion. Code : {rc}")
 
@@ -155,6 +164,38 @@ def on_message(client, userdata, msg):
             buffer.append(int_to_bytes(parameters[1])) # 16 bits
             messageOk = True
             
+    elif msg.topic == TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES:
+        print ("TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES")
+        parameters = msg.payload.decode().split(',')
+        print (f"parameters {parameters}")
+        buffer = bytearray(2) 
+        buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
+        buffer[1] = BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES
+        messageOk = True
+        print (f"Buffer {buffer}")
+
+    elif msg.topic == TOPIC_ASK_MIXING_VALVE_POSITION:
+        print ("TOPIC_GET_MIXING_VALVE_POSITION")
+        parameters = msg.payload.decode().split(',')
+        print (f"parameters {parameters}")
+        buffer = bytearray(2) 
+        buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
+        buffer[1] = BOILER_COMMAND_GET_MIXING_VALVE_POSITION
+        messageOk = True
+        print (f"Buffer {buffer}")
+
+    elif msg.topic == TOPIC_GET_SENSORS_RAW_TEMPERATURES:
+        print ("TOPIC_GET_SENSORS_RAW_TEMPERATURES")
+        parameters = msg.payload.decode().split(',')
+        print (f"parameters {parameters}")
+        
+        buffer = bytearray(2) 
+        buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
+        buffer[1] = BOILER_COMMAND_GET_SENSORS_RAW_TEMPERATURES
+        messageOk = True
+        print (f"Buffer {buffer}")
+
+
     elif msg.topic == TOPIC_ASK_BOILER_RUNNING_MODE:
         buffer = bytearray(2)  # Crée un buffer mutable de 2 octets, initialisé à b'\x00\x00'
         buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
@@ -179,10 +220,14 @@ def on_message(client, userdata, msg):
 
     if messageOk == True:
         try:
+            print("Envoi message a la carte")
             client_socket.sendall(buffer)
-            analyse_boiler(1)
+            print("Attente reponse")
+            analyse_boiler(3)
+            print("Fin traitement de la reponse ")
+
         except Exception as e:
-            print("Exception socket")
+            print(f"Exception socket")
 
         print(f"Fin traitement sur {msg.topic}")
     
@@ -230,17 +275,18 @@ def analyse_boiler(timeout=1):
             client_socket_connecte = False
             client_socket.close()
         else:
-            print (data)
-            print (int(data[0]))
-            print (int(BOILER_PROTOCOL_MAGIC_NUMBER))
-            
+            print( f"Trame recu : {data}")
+
+            print (f"Magic : {int(data[0])} {int(BOILER_PROTOCOL_MAGIC_NUMBER)}" )
             trameDecodee =  [byte for byte in data]
             
-            print(trameDecodee)
+            print( f"Trame decodee : {trameDecodee}")
 
             custom_keys = ["magicNumber", "key", "value1", "value2", "value3", "value4"]
             json_dict = {key: value for key, value in zip(custom_keys, trameDecodee)}
             json_string = json.dumps(json_dict, indent=4)
+
+            print( f"json_string : {json_string}")
 
             if (int(data[0]) == int(BOILER_PROTOCOL_MAGIC_NUMBER)):
                 if (data[1] == int(BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE)):
@@ -251,10 +297,18 @@ def analyse_boiler(timeout=1):
                     publier_message(TOPIC_GET_HEATING_CURVE_PARAMETERS, json_string)
                 elif (data[1] == BOILER_COMMAND_GET_BOILER_RUNNING_MODE):
                     publier_message(TOPIC_GET_BOILER_RUNNING_MODE, json_string) 
+                elif (data[1] == BOILER_COMMAND_GET_SENSORS_RAW_TEMPERATURES):
+                    publier_message(TOPIC_GET_SENSORS_RAW_TEMPERATURES, json_string) 
+                elif (data[1] == BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES):
+                    publier_message(TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES, json_string) 
+                elif (data[1] == BOILER_COMMAND_GET_MIXING_VALVE_POSITION):
+                    publier_message(TOPIC_GET_MIXING_VALVE_POSITION, json_string)     
+            print (f"Message publie {int(data[1])}")
+        
     except socket.timeout:
         print(f"Pas de donnees")
     except Exception as e:
-        print(e)
+        print(f"Exception {e}")
         client_socket_connecte = False
 
 
@@ -266,37 +320,60 @@ def interrogation_boiler():
     try:
         client_socket.sendall(buffer)
     except Exception as e:
-        print("Exception socket")
+        print(f"Exception socket {e}")
     
     analyse_boiler(3)
 
-    
-    buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
-    buffer[1] = BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE
-
-    
-    try:
-        client_socket.sendall(buffer)
-    except Exception as e:
-        print("Exception socket")
-    
-    analyse_boiler(3)
-    
-    
     buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
     buffer[1] = BOILER_COMMAND_GET_TARGET_START_WATER_TEMPERATURE
 
     try:
         client_socket.sendall(buffer)
     except Exception as e:
-        print("Exception socket")
+        print(f"Exception socket {e}")
+    
+    analyse_boiler(3)
+    
+    
+    buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
+    buffer[1] = BOILER_COMMAND_GET_MIXING_VALVE_POSITION
+
+    try:
+        client_socket.sendall(buffer)
+    except Exception as e:
+        print("Exception socket {e}")
 
     analyse_boiler(3)
+
+
+
 
 # Fonction pour publier un message
+#def publier_message(topic, message):
+#    client.publish(topic, message)
+#    print(f"Message publié sur {topic} : {message}")
+
+
 def publier_message(topic, message):
-    client.publish(topic, message)
-    print(f"Message publié sur {topic} : {message}")
+    try:
+        # S'assurer que c'est une chaîne JSON
+        if isinstance(message, dict):
+            message_str = json.dumps(message)
+        else:
+            message_str = str(message)
+        
+        print(f"Type du message: {type(message_str)}")
+        print(f"Contenu: {message_str}")
+        
+        # Publier
+        result = client.publish(topic, message_str)
+        print(f"Message publié sur {topic} : {message_str}")
+        print(f"Résultat: {result}")
+        
+    except Exception as e:
+        print(f"Erreur lors de la publication: {e}")
+        traceback.print_exc()
+
 
 # Boucle réseau dans un thread séparé
 client.loop_start()
