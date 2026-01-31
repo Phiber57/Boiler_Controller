@@ -44,8 +44,10 @@ TOPIC_ASK_HEATING_CURVE_PARAMETERS = "gatewayBBA/ask_heating_curve_parameters"
 TOPIC_GET_HEATING_CURVE_PARAMETERS = "gatewayBBA/get_heating_curve_parameters"          # Paramètre de la courbe de la loi d'eau (coefficient et parallel shift)
 TOPIC_SET_HEATING_CURVE_PARAMETERS = "gatewayBBA/set_heating_curve_parameters"          # Paramètre de la courbe de la loi d'eau (coefficient et parallel shift)
 
-
+TOPIC_ASK_SENSORS_CELSIUS_TEMPERATURES = "gatewayBBA/ask_sensors_celcius_temperatures"
 TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES = "gatewayBBA/get_sensors_celcius_temperatures"
+
+TOPIC_ASK_SENSORS_RAW_TEMPERATURES = "gatewayBBA/ask_sensors_raw_temperatures"
 TOPIC_GET_SENSORS_RAW_TEMPERATURES = "gatewayBBA/get_sensors_raw_temperatures"
 
 TOPIC_ASK_MIXING_VALVE_POSITION = "gatewayBBA/ask_mixing_valve_position"
@@ -97,9 +99,10 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(TOPIC_ASK_START_WATER_OUTSIDE_TEMPERATURES)
         client.subscribe(TOPIC_ASK_HEATING_CURVE_PARAMETERS)
         client.subscribe(TOPIC_SET_BOILER_RUNNING_MODE)
-        client.subscribe(TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES)
-        client.subscribe(TOPIC_GET_SENSORS_RAW_TEMPERATURES)
+        client.subscribe(TOPIC_ASK_SENSORS_CELSIUS_TEMPERATURES)
+        client.subscribe(TOPIC_ASK_SENSORS_RAW_TEMPERATURES)
         client.subscribe(TOPIC_ASK_MIXING_VALVE_POSITION)
+
     else:
         print(f"Erreur de connexion. Code : {rc}")
 
@@ -164,7 +167,7 @@ def on_message(client, userdata, msg):
             buffer.append(int_to_bytes(parameters[1])) # 16 bits
             messageOk = True
             
-    elif msg.topic == TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES:
+    elif msg.topic == TOPIC_ASK_SENSORS_CELSIUS_TEMPERATURES:
         print ("TOPIC_GET_SENSORS_CELSIUS_TEMPERATURES")
         parameters = msg.payload.decode().split(',')
         print (f"parameters {parameters}")
@@ -174,17 +177,7 @@ def on_message(client, userdata, msg):
         messageOk = True
         print (f"Buffer {buffer}")
 
-    elif msg.topic == TOPIC_ASK_MIXING_VALVE_POSITION:
-        print ("TOPIC_GET_MIXING_VALVE_POSITION")
-        parameters = msg.payload.decode().split(',')
-        print (f"parameters {parameters}")
-        buffer = bytearray(2) 
-        buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
-        buffer[1] = BOILER_COMMAND_GET_MIXING_VALVE_POSITION
-        messageOk = True
-        print (f"Buffer {buffer}")
-
-    elif msg.topic == TOPIC_GET_SENSORS_RAW_TEMPERATURES:
+    elif msg.topic == TOPIC_ASK_SENSORS_RAW_TEMPERATURES:
         print ("TOPIC_GET_SENSORS_RAW_TEMPERATURES")
         parameters = msg.payload.decode().split(',')
         print (f"parameters {parameters}")
@@ -195,6 +188,16 @@ def on_message(client, userdata, msg):
         messageOk = True
         print (f"Buffer {buffer}")
 
+
+    elif msg.topic == TOPIC_ASK_MIXING_VALVE_POSITION:
+        print ("TOPIC_GET_MIXING_VALVE_POSITION")
+        parameters = msg.payload.decode().split(',')
+        print (f"parameters {parameters}")
+        buffer = bytearray(2) 
+        buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
+        buffer[1] = BOILER_COMMAND_GET_MIXING_VALVE_POSITION
+        messageOk = True
+        print (f"Buffer {buffer}")
 
     elif msg.topic == TOPIC_ASK_BOILER_RUNNING_MODE:
         buffer = bytearray(2)  # Crée un buffer mutable de 2 octets, initialisé à b'\x00\x00'
@@ -343,9 +346,17 @@ def interrogation_boiler():
     except Exception as e:
         print("Exception socket {e}")
 
+
+    buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
+    buffer[1] = BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES
+
+    try:
+        client_socket.sendall(buffer)
+    except Exception as e:
+        print("Exception socket {e}")
+
+
     analyse_boiler(3)
-
-
 
 
 # Fonction pour publier un message
