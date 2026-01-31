@@ -346,7 +346,8 @@ def interrogation_boiler():
     except Exception as e:
         print("Exception socket {e}")
 
-
+    analyse_boiler(3)
+    
     buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER       # Modifie le premier octet
     buffer[1] = BOILER_COMMAND_GET_SENSORS_CELSIUS_TEMPERATURES
 
