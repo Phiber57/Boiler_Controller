@@ -160,11 +160,11 @@ def on_message(client, userdata, msg):
         
         parameters = msg.payload.decode().split(',')
         if len(parameters) == 2:
-            buffer = bytearray(6) 
-            buffer[0] = BOILER_PROTOCOL_MAGIC_NUMBER 
-            buffer[1] = BOILER_COMMAND_SET_HEATING_CURVE_PARAMETERS
-            buffer.append(int_to_bytes(parameters[0])) # 16 bits
-            buffer.append(int_to_bytes(parameters[1])) # 16 bits
+            buffer = bytearray() 
+            buffer.append(BOILER_PROTOCOL_MAGIC_NUMBER) 
+            buffer.append(BOILER_COMMAND_SET_HEATING_CURVE_PARAMETERS)
+            buffer.extend(int_to_bytes(parameters[0])) # 16 bits
+            buffer.extend(int_to_bytes(parameters[1])) # 16 bits
             messageOk = True
             
     elif msg.topic == TOPIC_ASK_SENSORS_CELSIUS_TEMPERATURES:
