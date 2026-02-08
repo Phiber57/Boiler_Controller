@@ -72,7 +72,7 @@ BOILER_COMMANDS_COUNT=13
 
 def int_to_bytes(value):
     """Convertit un entier en un buffer de 2 octets."""
-    return struct.pack('>H', int(value))
+    return struct.pack('<H', int(value))
 
 def int_to_byte(value):
     """Convertit un entier en un buffer de 1 octet."""
